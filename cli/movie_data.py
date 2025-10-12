@@ -1,4 +1,4 @@
-import json
+import json, string
 
 def read_data():
     what = None
@@ -8,9 +8,11 @@ def read_data():
 
 def search_data(data, term):
     out = []
-    lterm = term.lower()
+    trans = get_translation()
+
+    lterm = term.lower().translate(trans)
     for i, movie in enumerate(data):
-        if lterm in movie["title"].lower():
+        if lterm in movie["title"].lower().translate(trans):
             out.append(movie)
     return out
 
@@ -20,3 +22,6 @@ def execute_query(term, limit=5):
     found.sort(key=lambda item: int(item["id"]))
     limit = min(limit, len(found))
     return found[:limit]
+
+def get_translation():
+    return str.maketrans("", "", string.punctuation)
