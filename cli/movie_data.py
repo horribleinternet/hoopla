@@ -1,4 +1,5 @@
 import json, string
+from nltk.stem import PorterStemmer
 
 def read_data():
     what = None
@@ -38,7 +39,9 @@ def tokenize(words):
     trans = get_translation()
     terms = [term.lower().translate(trans) for term in terms]
     stopwords = read_stopwords()
-    return [item for item in terms if item not in stopwords]
+    terms = [item for item in terms if item not in stopwords]
+    stemmer = PorterStemmer()
+    return [stemmer.stem(item, True) for item in terms]
 
 def read_stopwords():
         stopwords = []
