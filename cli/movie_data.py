@@ -6,22 +6,34 @@ def read_data():
         what = json.load(f)
     return what["movies"]
 
-def search_data(data, term):
+def search_data(data, terms):
     out = []
-    trans = get_translation()
-
-    lterm = term.lower().translate(trans)
     for i, movie in enumerate(data):
-        if lterm in movie["title"].lower().translate(trans):
-            out.append(movie)
+        title_words = tokenize(movie["title"])
+        done = False
+        for term in terms:
+            for word in title_words:
+                if term in word:
+                    out.append(movie)
+                    done = True
+                    break
+            if done:
+                break
     return out
 
 def execute_query(term, limit=5):
     movies = read_data()
-    found = search_data(movies, term)
+    terms = tokenize(term)
+    found = search_data(movies, terms)
     found.sort(key=lambda item: int(item["id"]))
     limit = min(limit, len(found))
     return found[:limit]
 
 def get_translation():
     return str.maketrans("", "", string.punctuation)
+
+def tokenize(words):
+    terms = words.split()
+    terms = [item for item in terms if len(item) > 0]
+    trans = get_translation()
+    return [term.lower().translate(trans) for term in terms]

@@ -19,8 +19,8 @@ def main() -> None:
         case _:
             parser.print_help()
 
-def print_search(term):
-    found = execute_query(term)
+def print_search(term, limit=5):
+    found = execute_query(term, limit)
     for movie in found:
         print(f"{movie["id"]}. {movie["title"]}")
 
