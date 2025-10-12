@@ -8,8 +8,9 @@ def read_data():
 
 def search_data(data, term):
     out = []
+    lterm = term.lower()
     for i, movie in enumerate(data):
-        if term in movie["title"]:
+        if lterm in movie["title"].lower():
             out.append(movie)
     return out
 
