@@ -11,4 +11,5 @@ wheels/
 
 /data
 uv.lock
+/cache
 
