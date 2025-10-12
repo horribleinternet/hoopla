@@ -36,4 +36,13 @@ def tokenize(words):
     terms = words.split()
     terms = [item for item in terms if len(item) > 0]
     trans = get_translation()
-    return [term.lower().translate(trans) for term in terms]
+    terms = [term.lower().translate(trans) for term in terms]
+    stopwords = read_stopwords()
+    return [item for item in terms if item not in stopwords]
+
+def read_stopwords():
+        stopwords = []
+        with open("data/stopwords.txt", "r") as f:
+            all = f.read()
+            stopwords = all.splitlines()
+        return [item for item in stopwords if len(item) > 0]
