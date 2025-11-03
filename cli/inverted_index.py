@@ -44,14 +44,21 @@ class InvertedIndex:
         return self.get_tf(doc_id, term) * self.get_idf(term)
 
     def get_idf(self, term):
+        return math.log((len(self.term_frequencies) + 1) / (self.__get_term_count(term) + 1))
+
+    def get_bm25_idf(self, term: str) -> float:
+        df = self.__get_term_count(term)
+        return math.log((len(self.term_frequencies) - df + 0.5) / (df + 0.5) + 1)
+        
+    def __get_term_count(self, term):
         tokens = tokenize(term)
         if len(tokens) != 1:
             raise Exception("Only one term allowd")
-        term_num = 1
+        term_num = 0
         for val in self.term_frequencies.values():
             if val[tokens[0]] > 0:
                 term_num += 1
-        return math.log((len(self.term_frequencies) + 1) / term_num)
+        return term_num
 
     def build(self, data):
         for movie in data:
