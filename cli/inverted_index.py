@@ -40,6 +40,9 @@ class InvertedIndex:
             raise Exception("Invalid document id")
         return self.term_frequencies[id_num][tokens[0]]
 
+    def get_tfidf(self, doc_id: str, term: str) -> int:
+        return self.get_tf(doc_id, term) * self.get_idf(term)
+
     def get_idf(self, term):
         tokens = tokenize(term)
         if len(tokens) != 1:
