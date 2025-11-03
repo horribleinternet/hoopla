@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
-from movie_data import execute_query, read_data
+from movie_data import execute_query, read_data, tokenize
 from inverted_index import InvertedIndex
 
 def main() -> None:
@@ -17,14 +17,28 @@ def main() -> None:
     match args.command:
         case "search":
             print(f"Searching for: {args.query}")
-            print_search(args.query)
+            indexer = InvertedIndex()
+            try:
+                indexer.load()
+            except Exception as e:
+                print("Indexes not built.")
+                print(e)
+                return
+            out = []
+            tokens = tokenize(args.query)
+            for token in tokens:
+                out.extend(indexer.get_document(token))
+                if len(out) > 5:
+                    break
+            for id in out[:5]:
+                print(id, indexer.docmap[id]["title"])
+           
         case "build":
             print(f"Building database")
             data = read_data()
             indexer = InvertedIndex()
             indexer.build(data)
             indexer.save()
-            print(list(indexer.index["merida"])[0])
         case _:
             parser.print_help()
 
