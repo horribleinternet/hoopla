@@ -12,9 +12,13 @@ def main() -> None:
     search_parser = subparsers.add_parser("search", help="Search movies using BM25")
     search_parser.add_argument("query", type=str, help="Search query")
 
-    tf_parser = subparsers.add_parser("tf", help="The thre frequency of a term in a movie description")
+    tf_parser = subparsers.add_parser("tf", help="The frequency of a term in a movie description")
     tf_parser.add_argument("movie_id", type=int, help="Id number of movie")
     tf_parser.add_argument("term", type=str, help="Term to count")
+
+    tfidf_parser = subparsers.add_parser("tfidf", help="The frequency of a term in a movie description times its rarity")
+    tfidf_parser.add_argument("movie_id", type=int, help="Id number of movie")
+    tfidf_parser.add_argument("term", type=str, help="Term to count")
 
     idf_parser = subparsers.add_parser("idf", help="Find the inverse document frequency of a term")
     idf_parser.add_argument("term", type=str, help="Term to find")
@@ -50,6 +54,15 @@ def main() -> None:
                 indexer = InvertedIndex()
                 indexer.load()
                 print(indexer.get_tf(str(args.movie_id), args.term))
+            except Exception as e:
+                print(e)
+            return
+        case "tfidf":
+            try:
+                indexer = InvertedIndex()
+                indexer.load()
+                tf_idf = indexer.get_tfidf(str(args.movie_id), args.term)
+                print(f"TF-IDF score of '{args.term}' in document '{args.movie_id}': {tf_idf:.2f}")
             except Exception as e:
                 print(e)
             return
