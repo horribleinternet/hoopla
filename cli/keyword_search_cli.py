@@ -22,7 +22,10 @@ def main() -> None:
 
     idf_parser = subparsers.add_parser("idf", help="Find the inverse document frequency of a term")
     idf_parser.add_argument("term", type=str, help="Term to find")
-                           
+
+    bm35idf_parser = subparsers.add_parser("bm25idf", help="Find the BM25 inverse document frequency of a term")
+    bm35idf_parser.add_argument("term", type=str, help="Term to find")
+
     args = parser.parse_args()
 
     match args.command:
@@ -56,7 +59,6 @@ def main() -> None:
                 print(indexer.get_tf(str(args.movie_id), args.term))
             except Exception as e:
                 print(e)
-            return
         case "tfidf":
             try:
                 indexer = InvertedIndex()
@@ -65,7 +67,6 @@ def main() -> None:
                 print(f"TF-IDF score of '{args.term}' in document '{args.movie_id}': {tf_idf:.2f}")
             except Exception as e:
                 print(e)
-            return
         case "idf":
             try:
                 indexer = InvertedIndex()
@@ -74,8 +75,19 @@ def main() -> None:
                 print(f"Inverse document frequency of '{args.term}': {idf:.2f}")
             except Exception as e:
                 print(e)
+        case "bm25idf":
+            try:
+                bm25idf = bm25_idf_command(args.term)
+                print(f"BM25 IDF score of '{args.term}': {bm25idf:.2f}")
+            except Exception as e:
+                print(e)
         case _:
             parser.print_help()
+
+def bm25_idf_command(term):
+        indexer = InvertedIndex()
+        indexer.load()
+        return indexer.get_bm25_idf(term)
 
 def print_search(term, limit=5):
     found = execute_query(term, limit)
