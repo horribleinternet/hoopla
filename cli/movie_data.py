@@ -1,6 +1,9 @@
 import json, string
 from nltk.stem import PorterStemmer
 
+BM25_K1 = 1.5
+BM25_B = 0.75
+
 def read_data():
     what = None
     with open("data/movies.json", "r") as f:

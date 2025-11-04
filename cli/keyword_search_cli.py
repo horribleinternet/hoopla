@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 import argparse
-from movie_data import execute_query, read_data, tokenize
-from inverted_index import InvertedIndex, BM25_K1
+from movie_data import execute_query, read_data, tokenize, BM25_K1
+from inverted_index import InvertedIndex
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Keyword Search CLI")

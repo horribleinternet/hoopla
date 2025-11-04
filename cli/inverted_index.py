@@ -1,10 +1,8 @@
-from movie_data import tokenize
+from movie_data import tokenize, BM25_K1
 from pickle import dump, load
 from collections import Counter
 import os
 import math
-
-BM25_K1 = 1.5
 
 class InvertedIndex:
     def __init__(self):
