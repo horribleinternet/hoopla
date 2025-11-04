@@ -4,6 +4,8 @@ from collections import Counter
 import os
 import math
 
+BM25_K1 = 1.5
+
 class InvertedIndex:
     def __init__(self):
         self.index = dict()
@@ -49,7 +51,11 @@ class InvertedIndex:
     def get_bm25_idf(self, term: str) -> float:
         df = self.__get_term_count(term)
         return math.log((len(self.term_frequencies) - df + 0.5) / (df + 0.5) + 1)
-        
+
+    def get_bm25_tf(self, doc_id, term, k1 = BM25_K1):
+        tf = self.get_tf(doc_id, term)
+        return (tf * (k1 + 1)) / (tf + k1)
+      
     def __get_term_count(self, term):
         tokens = tokenize(term)
         if len(tokens) != 1:
