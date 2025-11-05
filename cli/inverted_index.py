@@ -1,14 +1,22 @@
-from movie_data import tokenize, BM25_K1
+from movie_data import tokenize, BM25_K1, BM25_B
 from pickle import dump, load
 from collections import Counter
 import os
 import math
+
+CACHE_DIR="cache"
+INDEX_FILENAME="index.pkl"
+DOCMAP_FILENAME="docmap.pkl"
+TF_FILENAME="term_frequencies.pkl"
+LENGTHS_FILENAME="doc_lengths.pkl"
 
 class InvertedIndex:
     def __init__(self):
         self.index = dict()
         self.docmap = dict()
         self.term_frequencies = dict()
+        self.doc_lengths = dict()
+        self.avg_len = -1
 
     def __add_document(self, doc_id, text):
         id_num = int(doc_id)
@@ -16,12 +24,23 @@ class InvertedIndex:
             self.term_frequencies[id_num] = Counter()
         counter = self.term_frequencies[id_num]
         tokens = tokenize(text)
+        self.doc_lengths[id_num] = len(tokens)
         for token in tokens:
             if token not in self.index:
                 self.index[token] = {id_num,}
             else:
                 self.index[token].add(id_num)
             counter[token] += 1
+
+    def __get_avg_doc_length(self) -> float:
+        if self.avg_len < 0:
+            self.avg_len = 0.0
+            if len(self.doc_lengths) > 0:
+                total = 0.0
+                for doc_len in self.doc_lengths.values():
+                    total = total + doc_len
+                self.avg_len = total / len(self.doc_lengths)
+        return self.avg_len
 
     def get_document(self, term):
         term = term.lower()
@@ -50,10 +69,12 @@ class InvertedIndex:
         df = self.__get_term_count(term)
         return math.log((len(self.term_frequencies) - df + 0.5) / (df + 0.5) + 1)
 
-    def get_bm25_tf(self, doc_id, term, k1 = BM25_K1):
+    def get_bm25_tf(self, doc_id, term, k1 = BM25_K1, b = BM25_B):
         tf = self.get_tf(doc_id, term)
-        return (tf * (k1 + 1)) / (tf + k1)
-      
+        norm = 1 - b + b * (self.doc_lengths[int(doc_id)] / self.__get_avg_doc_length())
+        return (tf * (k1 + 1)) / (tf + k1 * norm)
+        #return (tf * (k1 + 1)) / (tf + k1)
+
     def __get_term_count(self, term):
         tokens = tokenize(term)
         if len(tokens) != 1:
@@ -69,23 +90,29 @@ class InvertedIndex:
             desc = f"{movie["title"]} {movie["description"]}"
             self.__add_document(movie["id"], desc)
             self.docmap[int(movie["id"])] = movie
+        self.avg_len = -1
 
     def save(self):
         try:
             os.stat("cache")
         except:
             os.mkdir("cache")
-        with open("cache/index.pkl", "wb") as f:
+        with open(os.path.join(CACHE_DIR, INDEX_FILENAME), "wb") as f:
             dump(self.index, f)
-        with open("cache/docmap.pkl", "wb") as f:
+        with open(os.path.join(CACHE_DIR, DOCMAP_FILENAME), "wb") as f:
             dump(self.docmap, f)
-        with open("cache/term_frequencies.pkl", "wb") as f:
+        with open(os.path.join(CACHE_DIR, TF_FILENAME), "wb") as f:
             dump(self.term_frequencies, f)
+        with open(os.path.join(CACHE_DIR, LENGTHS_FILENAME), "wb") as f:
+            dump(self.doc_lengths, f)
 
     def load(self):
-        with open("cache/index.pkl", "rb") as f:
+        with open(os.path.join(CACHE_DIR, INDEX_FILENAME), "rb") as f:
             self.index = load(f)
-        with open("cache/docmap.pkl", "rb") as f:
+        with open(os.path.join(CACHE_DIR, DOCMAP_FILENAME), "rb") as f:
             self.docmap = load(f)
-        with open("cache/term_frequencies.pkl", "rb") as f:
+        with open(os.path.join(CACHE_DIR, TF_FILENAME), "rb") as f:
             self.term_frequencies = load(f)
+        with open(os.path.join(CACHE_DIR, LENGTHS_FILENAME), "rb") as f:
+            self.doc_lengths = load(f)
+        self.avg_len = -1
