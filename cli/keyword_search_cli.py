@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
-from movie_data import execute_query, read_data, tokenize, BM25_K1
+from movie_data import execute_query, read_data, tokenize, BM25_K1, BM25_B
 from inverted_index import InvertedIndex
 
 def main() -> None:
@@ -30,6 +30,7 @@ def main() -> None:
     bm25_tf_parser.add_argument("doc_id", type=int, help="Document ID")
     bm25_tf_parser.add_argument("term", type=str, help="Term to get BM25 TF score for")
     bm25_tf_parser.add_argument("k1", type=float, nargs='?', default=BM25_K1, help="Tunable BM25 K1 parameter")
+    bm25_tf_parser.add_argument("b", type=float, nargs='?', default=BM25_B, help="Tunable BM25 b parameter")
 
     args = parser.parse_args()
 
@@ -88,9 +89,7 @@ def main() -> None:
                 print(e)
         case "bm25tf":
             try:
-                indexer = InvertedIndex()
-                indexer.load()
-                bm25tf = indexer.get_bm25_tf(str(args.doc_id), args.term, args.k1)
+                bm25tf = bm25_tf_command(args.doc_id, args.term, args.k1, args.b)
                 print(f"BM25 TF score of '{args.term}' in document '{args.doc_id}': {bm25tf:.2f}")
             except Exception as e:
                 print(e)
@@ -98,9 +97,14 @@ def main() -> None:
             parser.print_help()
 
 def bm25_idf_command(term):
-        indexer = InvertedIndex()
-        indexer.load()
-        return indexer.get_bm25_idf(term)
+    indexer = InvertedIndex()
+    indexer.load()
+    return indexer.get_bm25_idf(term)
+
+def bm25_tf_command(doc_id, term, k1, b):
+    indexer = InvertedIndex()
+    indexer.load()
+    return indexer.get_bm25_tf(str(doc_id), term, k1, b)
 
 def print_search(term, limit=5):
     found = execute_query(term, limit)
