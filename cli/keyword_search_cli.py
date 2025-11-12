@@ -32,6 +32,9 @@ def main() -> None:
     bm25_tf_parser.add_argument("k1", type=float, nargs='?', default=BM25_K1, help="Tunable BM25 K1 parameter")
     bm25_tf_parser.add_argument("b", type=float, nargs='?', default=BM25_B, help="Tunable BM25 b parameter")
 
+    bm25search_parser = subparsers.add_parser("bm25search", help="Search movies using full BM25 scoring")
+    bm25search_parser.add_argument("query", type=str, help="Search query")
+
     args = parser.parse_args()
 
     match args.command:
@@ -93,6 +96,16 @@ def main() -> None:
                 print(f"BM25 TF score of '{args.term}' in document '{args.doc_id}': {bm25tf:.2f}")
             except Exception as e:
                 print(e)
+        case "bm25search":
+            #try:
+                indexer = InvertedIndex()
+                indexer.load()
+                scores = indexer.bm25_search(args.query, 5)
+                i = 0
+                for i in range(0, len(scores)):
+                    print(f"{i}. ({scores[i][0]}) {indexer.docmap[scores[i][0]]["title"]} - Score {scores[i][1]:.2f}")
+            #except Exception as e:
+            #    print(e)
         case _:
             parser.print_help()
 

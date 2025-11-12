@@ -71,9 +71,23 @@ class InvertedIndex:
 
     def get_bm25_tf(self, doc_id, term, k1 = BM25_K1, b = BM25_B):
         tf = self.get_tf(doc_id, term)
-        norm = 1 - b + b * (self.doc_lengths[int(doc_id)] / self.__get_avg_doc_length())
-        return (tf * (k1 + 1)) / (tf + k1 * norm)
+        norm = 1 - BM25_B + BM25_B * (self.doc_lengths[int(doc_id)] / self.__get_avg_doc_length())
+        return (tf * (BM25_K1 + 1)) / (tf + BM25_K1 * norm)
         #return (tf * (k1 + 1)) / (tf + k1)
+
+    def bm25(self, doc_id, term):
+        return self.get_bm25_tf(doc_id, term) * self.get_bm25_idf(term)
+
+    def bm25_search(self, query, limit):
+        tokens = tokenize(query)
+        scores = dict()
+        for doc_id in self.docmap:
+            doc_score = 0
+            for token in tokens:
+                doc_score = doc_score + self.bm25(doc_id, token)
+            scores[doc_id] = doc_score
+        top_scores = sorted(scores.items(), key=lambda item: item[1], reverse=True)
+        return top_scores[:limit]
 
     def __get_term_count(self, term):
         tokens = tokenize(term)
