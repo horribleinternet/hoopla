@@ -1,54 +1,50 @@
-import json, string
-from nltk.stem import PorterStemmer
+import json
+import os
+from typing import Any
 
-BM25_K1 = 1.50
+DEFAULT_SEARCH_LIMIT = 5
+
+BM25_K1 = 1.5
 BM25_B = 0.75
+SCORE_PRECISION = 3
 
-def read_data():
-    what = None
-    with open("data/movies.json", "r") as f:
-        what = json.load(f)
-    return what["movies"]
+PROJECT_ROOT = os.path.dirname(os.path.dirname(__file__))
+DATA_PATH = os.path.join(PROJECT_ROOT, "data", "movies.json")
+STOPWORDS_PATH = os.path.join(PROJECT_ROOT, "data", "stopwords.txt")
 
-def search_data(data, terms):
-    out = []
-    for i, movie in enumerate(data):
-        title_words = tokenize(movie["title"])
-        done = False
-        for term in terms:
-            for word in title_words:
-                if term in word:
-                    out.append(movie)
-                    done = True
-                    break
-            if done:
-                break
-    return out
+CACHE_DIR = os.path.join(PROJECT_ROOT, "cache")
 
-def execute_query(term, limit=5):
-    movies = read_data()
-    terms = tokenize(term)
-    found = search_data(movies, terms)
-    found.sort(key=lambda item: int(item["id"]))
-    limit = min(limit, len(found))
-    return found[:limit]
 
-def get_translation():
-    return str.maketrans("", "", string.punctuation)
+def load_movies() -> list[dict]:
+    with open(DATA_PATH, "r") as f:
+        data = json.load(f)
+    return data["movies"]
 
-def tokenize(words):
-    terms = words.split()
-    terms = [item for item in terms if len(item) > 0]
-    trans = get_translation()
-    terms = [term.lower().translate(trans) for term in terms]
-    stopwords = read_stopwords()
-    terms = [item for item in terms if item not in stopwords]
-    stemmer = PorterStemmer()
-    return [stemmer.stem(item, True) for item in terms]
 
-def read_stopwords():
-        stopwords = []
-        with open("data/stopwords.txt", "r") as f:
-            all = f.read()
-            stopwords = all.splitlines()
-        return [item for item in stopwords if len(item) > 0]
+def load_stopwords() -> list[str]:
+    with open(STOPWORDS_PATH, "r") as f:
+        return f.read().splitlines()
+
+
+def format_search_result(
+    doc_id: str, title: str, document: str, score: float, **metadata: Any
+) -> dict[str, Any]:
+    """Create standardized search result
+
+    Args:
+        doc_id: Document ID
+        title: Document title
+        document: Display text (usually short description)
+        score: Relevance/similarity score
+        **metadata: Additional metadata to include
+
+    Returns:
+        Dictionary representation of search result
+    """
+    return {
+        "id": doc_id,
+        "title": title,
+        "document": document,
+        "score": round(score, SCORE_PRECISION),
+        "metadata": metadata if metadata else {},
+    }
