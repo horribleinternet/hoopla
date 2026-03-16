@@ -8,8 +8,8 @@ EMBEDDINGS_CACHE = "cache/movie_embeddings.npy"
 MOVIE_DATA = "data/movies.json"
 
 class SemanticSearch:
-    def __init__(self) -> None:
-        self.model = SentenceTransformer('all-MiniLM-L6-v2')
+    def __init__(self, model_name = "all-MiniLM-L6-v2") -> None:
+        self.model = SentenceTransformer(model_name)
         self.embeddings = None
         self.documents = None
         self.document_map = dict()
@@ -48,6 +48,24 @@ class SemanticSearch:
         similarities = [(cosine_similarity(embedding, self.embeddings[i]), self.documents[i]) for i in range(0, len(self.embeddings))]
         similarities.sort(key=lambda x: x[0],reverse=True)
         return [{'score': similarity[0], 'title': similarity[1]['title'], 'description': similarity[1]['description']} for similarity in similarities[:min(limit, len(similarities))]]
+
+class ChunkedSemanticSearch(SemanticSearch):
+    def __init__(self, model_name = "all-MiniLM-L6-v2") -> None:
+        super().__init__(model_name)
+        self.chunk_embeddings = None
+        self.chunk_metadata = None
+
+    def build_chunk_embeddings(self, documents):
+        self.documents = documents
+        all_chunks = []
+        for i, document in enumerate(documents):
+            if len(document['dwcription']) < 1:
+                continue
+            chunks = semantic_chunk_text(document['dwcription'])
+            all_chunks.extend(chunks)
+            for j, chunk in enumerate(chunks):
+                self.chunk_metadata.append({'movie_idx': i, 'chunk_idx': j, 'total_chunks': len(chunks)})
+
 
 def verify_embeddings():
     ss = SemanticSearch()
